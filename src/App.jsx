@@ -1,55 +1,55 @@
-import { useState, useEffect, useRef, useCallback } from “react”;
-import { supabase } from “./supabase.js”;
+import { useState, useEffect, useRef, useCallback } from "react";
+import { supabase } from "./supabase.js";
 
 // ── Shared palette (Snowbound SW7004) ─────────────────────────────────────────
 const C = {
-bg:”#F2EFE8”, bgAlt:”#EDE9E1”, bgCard:”#F8F6F2”, bgCardHov:”#F0EDE5”,
-bgHeader:”#E8E4DC”, bgHeaderWk:”#EAE6DE”, bgWeekend:”#EEEBE3”,
-border:”#DDD8CF”, borderLight:”#E7E3DB”,
-text:”#2A2520”, textMid:”#6A6358”, textMuted:”#9A9388”, textLight:”#C0BBB3”,
-appBar:”#1E1C1A”, appBarBtn:”#2E2B27”,
-accent:”#5C4F3D”, accentSoft:”#8B7B66”,
-purchased:”#4A8C5C”, purchasedBg:”#E6F2EB”,
-mixBtn:”#4A3F6B”, mixFlash:”#6C5CE7”,
-danger:”#B03A2E”,
-tabBar:”#1E1C1A”, tabActive:”#F0EDE6”, tabInactive:”#6A6358”,
+bg:"#F2EFE8", bgAlt:"#EDE9E1", bgCard:"#F8F6F2", bgCardHov:"#F0EDE5",
+bgHeader:"#E8E4DC", bgHeaderWk:"#EAE6DE", bgWeekend:"#EEEBE3",
+border:"#DDD8CF", borderLight:"#E7E3DB",
+text:"#2A2520", textMid:"#6A6358", textMuted:"#9A9388", textLight:"#C0BBB3",
+appBar:"#1E1C1A", appBarBtn:"#2E2B27",
+accent:"#5C4F3D", accentSoft:"#8B7B66",
+purchased:"#4A8C5C", purchasedBg:"#E6F2EB",
+mixBtn:"#4A3F6B", mixFlash:"#6C5CE7",
+danger:"#B03A2E",
+tabBar:"#1E1C1A", tabActive:"#F0EDE6", tabInactive:"#6A6358",
 };
 
-const DAYS = [“Monday”,“Tuesday”,“Wednesday”,“Thursday”,“Friday”,“Saturday”,“Sunday”];
-const DAY_SHORT = [“Mon”,“Tue”,“Wed”,“Thu”,“Fri”,“Sat”,“Sun”];
-const CAT = { top:“Top”, bottom:“Bottom”, layer:“Layer”, shoes:“Shoes”, bag:“Handbag” };
-const CAT_DOT = { top:”#4B73D9”, bottom:”#3A9E6A”, layer:”#D97A1A”, shoes:”#9E3AB5”, bag:”#B03A2E” };
+const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DAY_SHORT = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const CAT = { top:"Top", bottom:"Bottom", layer:"Layer", shoes:"Shoes", bag:"Handbag" };
+const CAT_DOT = { top:"#4B73D9", bottom:"#3A9E6A", layer:"#D97A1A", shoes:"#9E3AB5", bag:"#B03A2E" };
 
 // ── SHARED STORAGE KEYS (same on desktop + mobile) ───────────────────────────
-const STORAGE_PIECES  = “wp7-pieces”;
-const STORAGE_PLAN    = “wp7-plan”;
-const STORAGE_BRANDS  = “wp7-brands”;
+const STORAGE_PIECES  = "wp7-pieces";
+const STORAGE_PLAN    = "wp7-plan";
+const STORAGE_BRANDS  = "wp7-brands";
 
 const SEED_PIECES = [
-{ id:“p1”,  name:“Kurt Straight Jeans”,             brand:“Sézane”,         variant:“Faded Denim”,  price:145, link:“https://www.sezane.com/us/product/kurt-straight-jeans/faded-denim”,               image:“https://i.pinimg.com/736x/a4/e6/98/a4e698dcb90f94d5be34723b1a527ffb.jpg”, category:“bottom”, purchased:false },
-{ id:“p2”,  name:“Effortless Pant”,                  brand:“Aritzia”,        variant:“Black Linen”,   price:148, link:“https://www.aritzia.com/us/en/product/the-effortless-pant%E2%84%A2-linen/118264.html”, image:“https://i.pinimg.com/736x/fc/58/08/fc580830165c449cf46f0fd02d7a03ad.jpg”, category:“bottom”, purchased:false },
-{ id:“p3”,  name:“Effortless Pant”,                  brand:“Aritzia”,        variant:“Ivory Linen”,   price:148, link:“https://www.aritzia.com/us/en/product/the-effortless-pant%E2%84%A2-linen/118264.html”, image:””, category:“bottom”, purchased:false },
-{ id:“p4”,  name:“Stretch Twill Wide Leg”,           brand:“Spanx”,          variant:“Cypress”,       price:148, link:“https://www.spanx.com/collections/pants”,                                           image:“https://i.pinimg.com/736x/65/df/56/65df56da997a2178e734d4806190397e.jpg”, category:“bottom”, purchased:false },
-{ id:“p5”,  name:“Allegra Sleeveless Blouse”,        brand:“Modern Citizen”, variant:“Ivory”,         price:128, link:“https://www.moderncitizen.com/products/allegra-gathered-neck-sleeveless-blouse-ivory”, image:“https://i.pinimg.com/736x/94/69/83/946983d485e499ed1c09ee86659b5085.jpg”, category:“top”, purchased:false },
-{ id:“p6”,  name:“Hira Tie-Front Blouse”,            brand:“Modern Citizen”, variant:“Black”,         price:118, link:“https://www.moderncitizen.com/collections/blouses”,                                 image:“https://i.pinimg.com/736x/6c/88/b8/6c88b849b6085632914a66bad63b29e9.jpg”, category:“top”, purchased:false },
-{ id:“p7”,  name:“Faria Shirt”,                      brand:“Sézane”,         variant:“Ecru”,          price:150, link:“https://www.sezane.com/us-en/product/faria-shirt/ecru”,                              image:“https://i.pinimg.com/736x/20/a7/04/20a704681fece72f4063c36d8f72aa33.jpg”, category:“top”, purchased:false },
-{ id:“p8”,  name:“Analyne Shirt”,                    brand:“Sézane”,         variant:“Garden Green”,  price:145, link:“https://www.sezane.com/us/collection/Tops”,                                          image:””, category:“top”, purchased:false },
-{ id:“p9”,  name:“Carson Cardigan”,                  brand:“Modern Citizen”, variant:“Cobalt Blue”,   price:150, link:“https://www.moderncitizen.com/collections/sweaters”,                                image:””, category:“top”, purchased:false },
-{ id:“p10”, name:“Linen-Blend Shrunken Blazer”,      brand:“Vince”,          variant:“Off-White”,     price:568, link:“https://www.vince.com/collections/womens-jackets-blazers”,                          image:“https://cdna.lystit.com/300/375/n/photos/nordstrom/4bc1f255/vince-Ecru-Soft-Sculpture-Blazer.jpeg”, category:“layer”, purchased:false },
-{ id:“p11”, name:“Double-Breasted Boyfriend Blazer”, brand:“Vince”,          variant:“Black”,         price:595, link:“https://www.vince.com/collections/womens-jackets-blazers”,                          image:””, category:“layer”, purchased:false },
-{ id:“p12”, name:“Emerson Structured Jacket”,        brand:“Modern Citizen”, variant:””,              price:298, link:“https://www.moderncitizen.com/collections/jackets”,                                 image:””, category:“layer”, purchased:false },
-{ id:“p13”, name:“Larose Heeled Loafer”,             brand:“Vince”,          variant:“Black”,         price:385, link:“https://www.vince.com/collections/womens-shoes”,                                    image:””, category:“shoes”, purchased:false },
-{ id:“p14”, name:“Naomi Leather Loafer”,             brand:“Vince”,          variant:“Black”,         price:350, link:“https://www.vince.com/product/naomi-leather-loafer-298661.html”,                   image:””, category:“shoes”, purchased:false },
-{ id:“p15”, name:“Siena Lug-Sole Loafer”,            brand:“Vince”,          variant:“Black Patent”,  price:350, link:“https://www.vince.com/collections/womens-shoes”,                                    image:“https://cdna.lystit.com/520/650/n/photos/nordstrom/95dbef18/vince-Black-Patent-Siena-Lugged-Penny-Loafer.jpeg”, category:“shoes”, purchased:false },
+{ id:"p1",  name:"Kurt Straight Jeans",             brand:"Sézane",         variant:"Faded Denim",  price:145, link:"https://www.sezane.com/us/product/kurt-straight-jeans/faded-denim",               image:"https://i.pinimg.com/736x/a4/e6/98/a4e698dcb90f94d5be34723b1a527ffb.jpg", category:"bottom", purchased:false },
+{ id:"p2",  name:"Effortless Pant",                  brand:"Aritzia",        variant:"Black Linen",   price:148, link:"https://www.aritzia.com/us/en/product/the-effortless-pant%E2%84%A2-linen/118264.html", image:"https://i.pinimg.com/736x/fc/58/08/fc580830165c449cf46f0fd02d7a03ad.jpg", category:"bottom", purchased:false },
+{ id:"p3",  name:"Effortless Pant",                  brand:"Aritzia",        variant:"Ivory Linen",   price:148, link:"https://www.aritzia.com/us/en/product/the-effortless-pant%E2%84%A2-linen/118264.html", image:"", category:"bottom", purchased:false },
+{ id:"p4",  name:"Stretch Twill Wide Leg",           brand:"Spanx",          variant:"Cypress",       price:148, link:"https://www.spanx.com/collections/pants",                                           image:"https://i.pinimg.com/736x/65/df/56/65df56da997a2178e734d4806190397e.jpg", category:"bottom", purchased:false },
+{ id:"p5",  name:"Allegra Sleeveless Blouse",        brand:"Modern Citizen", variant:"Ivory",         price:128, link:"https://www.moderncitizen.com/products/allegra-gathered-neck-sleeveless-blouse-ivory", image:"https://i.pinimg.com/736x/94/69/83/946983d485e499ed1c09ee86659b5085.jpg", category:"top", purchased:false },
+{ id:"p6",  name:"Hira Tie-Front Blouse",            brand:"Modern Citizen", variant:"Black",         price:118, link:"https://www.moderncitizen.com/collections/blouses",                                 image:"https://i.pinimg.com/736x/6c/88/b8/6c88b849b6085632914a66bad63b29e9.jpg", category:"top", purchased:false },
+{ id:"p7",  name:"Faria Shirt",                      brand:"Sézane",         variant:"Ecru",          price:150, link:"https://www.sezane.com/us-en/product/faria-shirt/ecru",                              image:"https://i.pinimg.com/736x/20/a7/04/20a704681fece72f4063c36d8f72aa33.jpg", category:"top", purchased:false },
+{ id:"p8",  name:"Analyne Shirt",                    brand:"Sézane",         variant:"Garden Green",  price:145, link:"https://www.sezane.com/us/collection/Tops",                                          image:"", category:"top", purchased:false },
+{ id:"p9",  name:"Carson Cardigan",                  brand:"Modern Citizen", variant:"Cobalt Blue",   price:150, link:"https://www.moderncitizen.com/collections/sweaters",                                image:"", category:"top", purchased:false },
+{ id:"p10", name:"Linen-Blend Shrunken Blazer",      brand:"Vince",          variant:"Off-White",     price:568, link:"https://www.vince.com/collections/womens-jackets-blazers",                          image:"https://cdna.lystit.com/300/375/n/photos/nordstrom/4bc1f255/vince-Ecru-Soft-Sculpture-Blazer.jpeg", category:"layer", purchased:false },
+{ id:"p11", name:"Double-Breasted Boyfriend Blazer", brand:"Vince",          variant:"Black",         price:595, link:"https://www.vince.com/collections/womens-jackets-blazers",                          image:"", category:"layer", purchased:false },
+{ id:"p12", name:"Emerson Structured Jacket",        brand:"Modern Citizen", variant:"",              price:298, link:"https://www.moderncitizen.com/collections/jackets",                                 image:"", category:"layer", purchased:false },
+{ id:"p13", name:"Larose Heeled Loafer",             brand:"Vince",          variant:"Black",         price:385, link:"https://www.vince.com/collections/womens-shoes",                                    image:"", category:"shoes", purchased:false },
+{ id:"p14", name:"Naomi Leather Loafer",             brand:"Vince",          variant:"Black",         price:350, link:"https://www.vince.com/product/naomi-leather-loafer-298661.html",                   image:"", category:"shoes", purchased:false },
+{ id:"p15", name:"Siena Lug-Sole Loafer",            brand:"Vince",          variant:"Black Patent",  price:350, link:"https://www.vince.com/collections/womens-shoes",                                    image:"https://cdna.lystit.com/520/650/n/photos/nordstrom/95dbef18/vince-Black-Patent-Siena-Lugged-Penny-Loafer.jpeg", category:"shoes", purchased:false },
 ];
 
 const SEED_PLAN = {
-Monday:[“p3”,“p10”,“p5”,“p13”], Tuesday:[“p1”,“p8”,“p11”,“p15”],
-Wednesday:[“p2”,“p11”,“p7”,“p13”], Thursday:[“p4”,“p10”,“p6”,“p14”],
-Friday:[“p1”,“p9”,“p12”,“p15”], Saturday:[], Sunday:[],
+Monday:["p3","p10","p5","p13"], Tuesday:["p1","p8","p11","p15"],
+Wednesday:["p2","p11","p7","p13"], Thursday:["p4","p10","p6","p14"],
+Friday:["p1","p9","p12","p15"], Saturday:[], Sunday:[],
 };
 
-const EMPTY_FORM = { name:””, brand:””, variant:””, price:””, link:””, image:””, category:“top”, purchased:false };
+const EMPTY_FORM = { name:"", brand:"", variant:"", price:"", link:"", image:"", category:"top", purchased:false };
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
@@ -68,10 +68,10 @@ const [synced, setSynced] = useState(false);
 useEffect(() => {
 if (!userId) { setSynced(false); return; }
 supabase
-.from(“wardrobe_data”)
-.select(“value”)
-.eq(“user_id”, userId)
-.eq(“key”, key)
+.from("wardrobe_data")
+.select("value")
+.eq("user_id", userId)
+.eq("key", key)
 .maybeSingle()
 .then(({ data, error }) => {
 if (data?.value !== undefined) {
@@ -86,16 +86,16 @@ setSynced(true); // always unblock writes, even if no row exists yet
 useEffect(() => {
 try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 if (!userId || !synced) {
-console.log(”[useStore] skipping write — userId:”, userId, “synced:”, synced, “key:”, key);
+console.log("[useStore] skipping write — userId:", userId, "synced:", synced, "key:", key);
 return;
 }
-console.log(”[useStore] writing to Supabase — key:”, key, “userId:”, userId);
-supabase.from(“wardrobe_data”).upsert(
+console.log("[useStore] writing to Supabase — key:", key, "userId:", userId);
+supabase.from("wardrobe_data").upsert(
 { user_id: userId, key, value: val, updated_at: new Date().toISOString() },
-{ onConflict: “user_id,key” }
+{ onConflict: "user_id,key" }
 ).then(({ error }) => {
-if (error) console.error(”[useStore] write error:”, error);
-else console.log(”[useStore] write success — key:”, key);
+if (error) console.error("[useStore] write error:", error);
+else console.log("[useStore] write success — key:", key);
 });
 }, [val, userId, synced, key]);
 
@@ -106,8 +106,8 @@ function useIsMobile() {
 const [mobile, setMobile] = useState(window.innerWidth < 768);
 useEffect(() => {
 const fn = () => setMobile(window.innerWidth < 768);
-window.addEventListener(“resize”, fn);
-return () => window.removeEventListener(“resize”, fn);
+window.addEventListener("resize", fn);
+return () => window.removeEventListener("resize", fn);
 }, []);
 return mobile;
 }
@@ -116,15 +116,15 @@ return mobile;
 // ── Smart outfit generation ──────────────────────────────────────────────────
 // Assigns each piece a color family and formality score from its name/variant
 function pieceProfile(p) {
-const txt = (p.name + “ “ + (p.variant||””)).toLowerCase();
+const txt = (p.name + " " + (p.variant||"")).toLowerCase();
 // Color family
-let color = “neutral”;
-if (/black|charcoal|dark|noir/.test(txt)) color = “dark”;
-else if (/white|ivory|cream|ecru|off.white|snow/.test(txt)) color = “light”;
-else if (/blue|cobalt|navy|denim|indigo/.test(txt)) color = “blue”;
-else if (/green|sage|olive|garden/.test(txt)) color = “green”;
-else if (/red|burgundy|wine|rust/.test(txt)) color = “warm”;
-else if (/camel|tan|beige|sand|cypress|faded/.test(txt)) color = “neutral”;
+let color = "neutral";
+if (/black|charcoal|dark|noir/.test(txt)) color = "dark";
+else if (/white|ivory|cream|ecru|off.white|snow/.test(txt)) color = "light";
+else if (/blue|cobalt|navy|denim|indigo/.test(txt)) color = "blue";
+else if (/green|sage|olive|garden/.test(txt)) color = "green";
+else if (/red|burgundy|wine|rust/.test(txt)) color = "warm";
+else if (/camel|tan|beige|sand|cypress|faded/.test(txt)) color = "neutral";
 // Formality: 0=casual, 1=smart-casual, 2=formal
 let formality = 1;
 if (/jeans|denim|cardigan|sneaker/.test(txt)) formality = 0;
@@ -135,7 +135,7 @@ return { …p, color, formality };
 // Returns true if two color families work well together
 function colorsCompat(a, b) {
 if (a === b) return true; // same family always works
-const neutrals = [“neutral”,“light”,“dark”];
+const neutrals = ["neutral","light","dark"];
 if (neutrals.includes(a) || neutrals.includes(b)) return true; // neutrals go with everything
 return false; // two different colors = clash
 }
@@ -143,7 +143,7 @@ return false; // two different colors = clash
 function generateOutfits(pieces) {
 const profiled = pieces.map(pieceProfile);
 const by = cat => profiled.filter(p => p.category === cat);
-const [bottoms, tops, layers, shoes, bags] = [“bottom”,“top”,“layer”,“shoes”,“bag”].map(by);
+const [bottoms, tops, layers, shoes, bags] = ["bottom","top","layer","shoes","bag"].map(by);
 if (!bottoms.length || !tops.length || !shoes.length) return null;
 
 const shuffle = arr => […arr].sort(() => Math.random() - 0.5);
@@ -210,71 +210,71 @@ function Thumb({ src, name, category, size=52, onClickEmpty, style={} }) {
 const [err, setErr] = useState(false);
 useEffect(()=>setErr(false),[src]);
 if (!src || err) return (
-<div onClick={onClickEmpty} style={{ width:size, height:size, background:C.bg, border:`1.5px dashed ${C.border}`, borderRadius:6, display:“flex”, alignItems:“center”, justifyContent:“center”, flexShrink:0, cursor:onClickEmpty?“pointer”:“default”, …style }}>
-{onClickEmpty ? <span style={{ fontSize:9, color:C.textLight, textAlign:“center”, lineHeight:1.3, userSelect:“none” }}>+img</span>
-: <span style={{ width:8, height:8, borderRadius:“50%”, background:CAT_DOT[category]||C.border, display:“block” }}/>}
+<div onClick={onClickEmpty} style={{ width:size, height:size, background:C.bg, border:`1.5px dashed ${C.border}`, borderRadius:6, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:onClickEmpty?"pointer":"default", …style }}>
+{onClickEmpty ? <span style={{ fontSize:9, color:C.textLight, textAlign:"center", lineHeight:1.3, userSelect:"none" }}>+img</span>
+: <span style={{ width:8, height:8, borderRadius:"50%", background:CAT_DOT[category]||C.border, display:"block" }}/>}
 </div>
 );
-return <img src={src} alt={name} width={size} height={size} onError={()=>setErr(true)} style={{ objectFit:“cover”, borderRadius:6, flexShrink:0, display:“block”, …style }}/>;
+return <img src={src} alt={name} width={size} height={size} onError={()=>setErr(true)} style={{ objectFit:"cover", borderRadius:6, flexShrink:0, display:"block", …style }}/>;
 }
 
 function Checkbox({ checked, onChange, small }) {
 const s = small ? 16 : 20;
 return (
-<div onClick={onChange} style={{ width:s, height:s, borderRadius:small?3:5, border:`2px solid ${checked?C.purchased:C.border}`, background:checked?C.purchased:C.bgCard, display:“flex”, alignItems:“center”, justifyContent:“center”, flexShrink:0, cursor:“pointer”, transition:“all .15s” }}>
+<div onClick={onChange} style={{ width:s, height:s, borderRadius:small?3:5, border:`2px solid ${checked?C.purchased:C.border}`, background:checked?C.purchased:C.bgCard, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", transition:"all .15s" }}>
 {checked && <svg width={small?8:11} height={small?6:9} viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
 </div>
 );
 }
 
 function MiniBtn({ onClick, bg, c, children }) {
-return <button onClick={onClick} style={{ fontSize:10, fontWeight:600, padding:“3px 8px”, borderRadius:4, background:bg, border:“none”, cursor:“pointer”, color:c, fontFamily:”‘DM Sans’,sans-serif”, letterSpacing:“0.04em”, textTransform:“uppercase” }}>{children}</button>;
+return <button onClick={onClick} style={{ fontSize:10, fontWeight:600, padding:"3px 8px", borderRadius:4, background:bg, border:"none", cursor:"pointer", color:c, fontFamily:"‘DM Sans’,sans-serif", letterSpacing:"0.04em", textTransform:"uppercase" }}>{children}</button>;
 }
 
 // ── Brand search URL patterns ────────────────────────────────────────────────
 const BRAND_SEARCH_URLS = {
-“Theory”:          “https://www.theory.com/search?q={q}”,
-“Vince”:           “https://www.vince.com/search?q={q}”,
-“Sézane”:          “https://www.sezane.com/us-en/search?q={q}”,
-“Aritzia”:         “https://www.aritzia.com/us/en/search?q={q}”,
-“Everlane”:        “https://www.everlane.com/search?utf8=%E2%9C%93&query={q}”,
-“COS”:             “https://www.cos.com/en_usd/search.html?q={q}”,
-“Toteme”:          “https://toteme-studio.com/?s={q}”,
-“Massimo Dutti”:   “https://www.massimodutti.com/us/search?searchTerm={q}”,
-“Madewell”:        “https://www.madewell.com/search?Ntt={q}”,
-“J.Crew”:          “https://www.jcrew.com/search2/index.jsp?q={q}”,
-“Banana Republic”: “https://bananarepublic.gap.com/browse/search.do?searchText={q}”,
-“Reformation”:     “https://www.thereformation.com/search?q={q}”,
-“& Other Stories”: “https://www.stories.com/en_usd/search.html?q={q}”,
-“Jenni Kayne”:     “https://jennikayne.com/search?q={q}”,
-“Equipment”:       “https://www.equipmentfr.com/search?q={q}”,
-“Rag & Bone”:      “https://www.rag-bone.com/search?q={q}”,
-“Club Monaco”:     “https://www.clubmonaco.com/en/search?q={q}”,
-“Veronica Beard”:  “https://www.veronicabeard.com/search?q={q}”,
-“A.P.C.”:          “https://www.apc.fr/en_us/search?q={q}”,
-“Celine”:          “https://www.celine.com/en-us/search?q={q}”,
-“Modern Citizen”:  “https://www.moderncitizen.com/search?q={q}”,
-“Spanx”:           “https://www.spanx.com/search?q={q}”,
+"Theory":          "https://www.theory.com/search?q={q}",
+"Vince":           "https://www.vince.com/search?q={q}",
+"Sézane":          "https://www.sezane.com/us-en/search?q={q}",
+"Aritzia":         "https://www.aritzia.com/us/en/search?q={q}",
+"Everlane":        "https://www.everlane.com/search?utf8=%E2%9C%93&query={q}",
+"COS":             "https://www.cos.com/en_usd/search.html?q={q}",
+"Toteme":          "https://toteme-studio.com/?s={q}",
+"Massimo Dutti":   "https://www.massimodutti.com/us/search?searchTerm={q}",
+"Madewell":        "https://www.madewell.com/search?Ntt={q}",
+"J.Crew":          "https://www.jcrew.com/search2/index.jsp?q={q}",
+"Banana Republic": "https://bananarepublic.gap.com/browse/search.do?searchText={q}",
+"Reformation":     "https://www.thereformation.com/search?q={q}",
+"& Other Stories": "https://www.stories.com/en_usd/search.html?q={q}",
+"Jenni Kayne":     "https://jennikayne.com/search?q={q}",
+"Equipment":       "https://www.equipmentfr.com/search?q={q}",
+"Rag & Bone":      "https://www.rag-bone.com/search?q={q}",
+"Club Monaco":     "https://www.clubmonaco.com/en/search?q={q}",
+"Veronica Beard":  "https://www.veronicabeard.com/search?q={q}",
+"A.P.C.":          "https://www.apc.fr/en_us/search?q={q}",
+"Celine":          "https://www.celine.com/en-us/search?q={q}",
+"Modern Citizen":  "https://www.moderncitizen.com/search?q={q}",
+"Spanx":           "https://www.spanx.com/search?q={q}",
 };
 
 // Default brands shown before user customises
-const DEFAULT_BRANDS = [“Theory”,“Vince”,“Sézane”,“Aritzia”,“Everlane”,“COS”,“Toteme”,“Massimo Dutti”,“Madewell”,“Reformation”];
+const DEFAULT_BRANDS = ["Theory","Vince","Sézane","Aritzia","Everlane","COS","Toteme","Massimo Dutti","Madewell","Reformation"];
 
 function buildSearchUrl(brand, query) {
 const q = encodeURIComponent(query);
 const pattern = BRAND_SEARCH_URLS[brand];
-if (pattern) return pattern.replace(”{q}”, q);
+if (pattern) return pattern.replace("{q}", q);
 // Fallback: Google site search for unknown brands
-const slug = brand.toLowerCase().replace(/\s+/g, “”).replace(/[^a-z0-9]/g, “”);
+const slug = brand.toLowerCase().replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
 return `https://www.google.com/search?q=${encodeURIComponent(query + " " + brand)}`;
 }
 
 // ── Find New Modal ─────────────────────────────────────────────────────────────
 function FindNewModal({ pieces, customBrands, onClose, onAdd, onBrandsChange }) {
-const [tab, setTab]         = useState(“search”);
-const [query, setQuery]     = useState(””);
+const [tab, setTab]         = useState("search");
+const [query, setQuery]     = useState("");
 const [searched, setSearched] = useState(false);
-const [newBrand, setNewBrand] = useState(””);
+const [newBrand, setNewBrand] = useState("");
 
 // Active brands = custom list if set, else defaults + brands already in library
 const libraryBrands = […new Set(pieces.map(p => p.brand).filter(Boolean))];
@@ -282,7 +282,7 @@ const activeBrands  = (customBrands && customBrands.length > 0)
 ? customBrands
 : […new Set([…DEFAULT_BRANDS, …libraryBrands])];
 
-const chips = [“silk blouse”,“tailored trousers”,“tote bag”,“cashmere knit”,“loafers”,“blazer”,“wide leg denim”,“midi skirt”,“trench coat”,“ballet flat”];
+const chips = ["silk blouse","tailored trousers","tote bag","cashmere knit","loafers","blazer","wide leg denim","midi skirt","trench coat","ballet flat"];
 
 const doSearch = (q) => {
 if (!(q||query).trim()) return;
@@ -294,9 +294,9 @@ const addBrand = () => {
 const b = newBrand.trim();
 if (!b) return;
 const current = customBrands && customBrands.length > 0 ? customBrands : activeBrands;
-if (current.map(x => x.toLowerCase()).includes(b.toLowerCase())) { setNewBrand(””); return; }
+if (current.map(x => x.toLowerCase()).includes(b.toLowerCase())) { setNewBrand(""); return; }
 onBrandsChange([…current, b]);
-setNewBrand(””);
+setNewBrand("");
 };
 
 const removeBrand = (b) => {
@@ -307,8 +307,8 @@ onBrandsChange(current.filter(x => x !== b));
 const allKnownBrands = Object.keys(BRAND_SEARCH_URLS).sort();
 
 return (
-<div style={{ position:“fixed”,inset:0,background:“rgba(30,28,26,0.55)”,zIndex:500,display:“flex”,alignItems:“flex-end”,justifyContent:“center” }} onClick={onClose}>
-<div style={{ background:C.bg,borderRadius:“16px 16px 0 0”,width:“100%”,maxWidth:640,maxHeight:“90vh”,display:“flex”,flexDirection:“column”,overflow:“hidden”,boxShadow:“0 -8px 40px rgba(0,0,0,0.2)” }} onClick={e=>e.stopPropagation()}>
+<div style={{ position:"fixed",inset:0,background:"rgba(30,28,26,0.55)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center" }} onClick={onClose}>
+<div style={{ background:C.bg,borderRadius:"16px 16px 0 0",width:"100%",maxWidth:640,maxHeight:"90vh",display:"flex",flexDirection:"column",overflow:"hidden",boxShadow:"0 -8px 40px rgba(0,0,0,0.2)" }} onClick={e=>e.stopPropagation()}>
 
 ```
     {/* Header */}
@@ -493,62 +493,62 @@ const r = new FileReader(); r.onload = e => setForm(f=>({…f,image:e.target.res
 };
 return (
 <div>
-<div style={{ display:“grid”,gridTemplateColumns:“1fr 1fr”,gap:10,marginBottom:12 }}>
-<FormField label=“Name” style={{ gridColumn:“1/-1” }}><FIn v={form.name} onChange={v=>setForm(f=>({…f,name:v}))} ph=“Effortless Pant”/></FormField>
-<FormField label="Brand"><FIn v={form.brand} onChange={v=>setForm(f=>({…f,brand:v}))} ph=“Aritzia”/></FormField>
-<FormField label="Variant / Color"><FIn v={form.variant} onChange={v=>setForm(f=>({…f,variant:v}))} ph=“Ivory”/></FormField>
-<FormField label="Price ($)"><FIn v={form.price} onChange={v=>setForm(f=>({…f,price:v}))} ph=“148”/></FormField>
+<div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12 }}>
+<FormField label="Name" style={{ gridColumn:"1/-1" }}><FIn v={form.name} onChange={v=>setForm(f=>({…f,name:v}))} ph="Effortless Pant"/></FormField>
+<FormField label="Brand"><FIn v={form.brand} onChange={v=>setForm(f=>({…f,brand:v}))} ph="Aritzia"/></FormField>
+<FormField label="Variant / Color"><FIn v={form.variant} onChange={v=>setForm(f=>({…f,variant:v}))} ph="Ivory"/></FormField>
+<FormField label="Price ($)"><FIn v={form.price} onChange={v=>setForm(f=>({…f,price:v}))} ph="148"/></FormField>
 <FormField label="Category">
 <select value={form.category} onChange={e=>setForm(f=>({…f,category:e.target.value}))}
-style={{ width:“100%”,border:`1.5px solid ${C.border}`,borderRadius:6,padding:“9px 10px”,fontSize:14,fontFamily:”‘DM Sans’,sans-serif”,background:C.bgCard,color:C.text,outline:“none” }}>
+style={{ width:"100%",border:`1.5px solid ${C.border}`,borderRadius:6,padding:"9px 10px",fontSize:14,fontFamily:"‘DM Sans’,sans-serif",background:C.bgCard,color:C.text,outline:"none" }}>
 {Object.entries(CAT).map(([k,v])=><option key={k} value={k}>{v}</option>)}
 </select>
 </FormField>
-<FormField label=“Product Link” style={{ gridColumn:“1/-1” }}><FIn v={form.link} onChange={v=>setForm(f=>({…f,link:v}))} ph=“https://…”/></FormField>
+<FormField label="Product Link" style={{ gridColumn:"1/-1" }}><FIn v={form.link} onChange={v=>setForm(f=>({…f,link:v}))} ph="https://…"/></FormField>
 </div>
-<FormField label=“Image” style={{ marginBottom:12 }}>
-<div style={{ display:“flex”,gap:8,alignItems:“center”,marginBottom:8 }}>
-<label style={{ background:C.bgHeader,border:`1.5px solid ${C.border}`,borderRadius:6,padding:“9px 14px”,cursor:“pointer”,fontSize:13,fontWeight:600,color:C.textMid,fontFamily:”‘DM Sans’,sans-serif”,flexShrink:0 }}>
+<FormField label="Image" style={{ marginBottom:12 }}>
+<div style={{ display:"flex",gap:8,alignItems:"center",marginBottom:8 }}>
+<label style={{ background:C.bgHeader,border:`1.5px solid ${C.border}`,borderRadius:6,padding:"9px 14px",cursor:"pointer",fontSize:13,fontWeight:600,color:C.textMid,fontFamily:"‘DM Sans’,sans-serif",flexShrink:0 }}>
 ↑ Upload
-<input type=“file” accept=“image/*” style={{ display:“none” }} onChange={e=>handleFile(e.target.files[0])}/>
+<input type="file" accept="image/*" style={{ display:"none" }} onChange={e=>handleFile(e.target.files[0])}/>
 </label>
 <span style={{ color:C.textLight,fontSize:12 }}>or</span>
-<FIn v={form.image} onChange={v=>setForm(f=>({…f,image:v}))} ph=“Paste URL”/>
+<FIn v={form.image} onChange={v=>setForm(f=>({…f,image:v}))} ph="Paste URL"/>
 </div>
 {form.image&&(
-<div style={{ display:“flex”,gap:10,alignItems:“flex-end” }}>
-<img src={form.image} alt=“preview” style={{ height:72,objectFit:“cover”,borderRadius:6,border:`1.5px solid ${C.border}` }} onError={()=>{}}/>
-<button onClick={()=>setForm(f=>({…f,image:””}))} style={{ fontSize:12,color:C.textMuted,background:“none”,border:“none”,cursor:“pointer”,padding:0 }}>Remove</button>
+<div style={{ display:"flex",gap:10,alignItems:"flex-end" }}>
+<img src={form.image} alt="preview" style={{ height:72,objectFit:"cover",borderRadius:6,border:`1.5px solid ${C.border}` }} onError={()=>{}}/>
+<button onClick={()=>setForm(f=>({…f,image:""}))} style={{ fontSize:12,color:C.textMuted,background:"none",border:"none",cursor:"pointer",padding:0 }}>Remove</button>
 </div>
 )}
 </FormField>
-<label style={{ display:“flex”,alignItems:“center”,gap:10,marginBottom:20,cursor:“pointer” }}>
+<label style={{ display:"flex",alignItems:"center",gap:10,marginBottom:20,cursor:"pointer" }}>
 <Checkbox checked={form.purchased} onChange={()=>setForm(f=>({…f,purchased:!f.purchased}))}/>
-<span style={{ fontSize:14,color:C.textMid,userSelect:“none” }}>Purchased</span>
+<span style={{ fontSize:14,color:C.textMid,userSelect:"none" }}>Purchased</span>
 </label>
-<div style={{ display:“flex”,gap:8 }}>
-<button onClick={onSave} style={{ flex:1,background:C.appBar,color:”#F0EDE6”,border:“none”,borderRadius:8,padding:“13px 0”,cursor:“pointer”,fontSize:14,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif” }}>
-{isEdit?“Save Changes”:“Add to Library”}
+<div style={{ display:"flex",gap:8 }}>
+<button onClick={onSave} style={{ flex:1,background:C.appBar,color:"#F0EDE6",border:"none",borderRadius:8,padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif" }}>
+{isEdit?"Save Changes":"Add to Library"}
 </button>
-<button onClick={onCancel} style={{ background:C.bgCard,color:C.textMid,border:`1.5px solid ${C.border}`,borderRadius:8,padding:“13px 16px”,cursor:“pointer”,fontSize:14 }}>Cancel</button>
+<button onClick={onCancel} style={{ background:C.bgCard,color:C.textMid,border:`1.5px solid ${C.border}`,borderRadius:8,padding:"13px 16px",cursor:"pointer",fontSize:14 }}>Cancel</button>
 </div>
 </div>
 );
 }
 function FormField({ label, children, style={} }) {
-return <div style={style}><div style={{ fontSize:11,fontWeight:600,letterSpacing:“0.06em”,textTransform:“uppercase”,color:C.textMuted,marginBottom:5 }}>{label}</div>{children}</div>;
+return <div style={style}><div style={{ fontSize:11,fontWeight:600,letterSpacing:"0.06em",textTransform:"uppercase",color:C.textMuted,marginBottom:5 }}>{label}</div>{children}</div>;
 }
 function FIn({ v, onChange, ph }) {
-return <input value={v} onChange={e=>onChange(e.target.value)} placeholder={ph} style={{ width:“100%”,border:`1.5px solid ${C.border}`,borderRadius:6,padding:“9px 10px”,fontSize:14,fontFamily:”‘DM Sans’,sans-serif”,color:C.text,outline:“none”,background:C.bgCard,boxSizing:“border-box” }}/>;
+return <input value={v} onChange={e=>onChange(e.target.value)} placeholder={ph} style={{ width:"100%",border:`1.5px solid ${C.border}`,borderRadius:6,padding:"9px 10px",fontSize:14,fontFamily:"‘DM Sans’,sans-serif",color:C.text,outline:"none",background:C.bgCard,boxSizing:"border-box" }}/>;
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  MOBILE VIEW                                                      ║
 // ╚══════════════════════════════════════════════════════════════════╝
 function MobileApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomBrands, signOut }) {
-const [tab, setTab] = useState(“planner”); // “library” | “planner” | “find”
-const [catFilter, setCatFilter] = useState(“all”);
-const [editPiece, setEditPiece] = useState(null); // null | piece | “new”
+const [tab, setTab] = useState("planner"); // "library" | "planner" | "find"
+const [catFilter, setCatFilter] = useState("all");
+const [editPiece, setEditPiece] = useState(null); // null | piece | "new"
 const [form, setForm] = useState(EMPTY_FORM);
 const [showDayPicker, setShowDayPicker] = useState(null); // pieceId when selecting day
 const [activeDay, setActiveDay] = useState(DAYS[0]);
@@ -558,15 +558,15 @@ const [mixFlash, setMixFlash] = useState(false);
 
 const byId = id => pieces.find(p => p.id === id);
 const dayPieces = (plan[activeDay]||[]).map(id=>byId(id)).filter(Boolean);
-const shown = catFilter===“all” ? pieces : pieces.filter(p=>p.category===catFilter);
+const shown = catFilter==="all" ? pieces : pieces.filter(p=>p.category===catFilter);
 
-const openAdd = () => { setForm(EMPTY_FORM); setEditPiece(“new”); };
-const openEdit = (p) => { setForm({name:p.name,brand:p.brand,variant:p.variant||””,price:String(p.price),link:p.link,image:p.image,category:p.category,purchased:p.purchased||false}); setEditPiece(p); };
+const openAdd = () => { setForm(EMPTY_FORM); setEditPiece("new"); };
+const openEdit = (p) => { setForm({name:p.name,brand:p.brand,variant:p.variant||"",price:String(p.price),link:p.link,image:p.image,category:p.category,purchased:p.purchased||false}); setEditPiece(p); };
 
 const save = () => {
 if (!form.name.trim()) return;
 const d = {…form, price:parseFloat(form.price)||0};
-if (editPiece===“new”) setPieces(prev=>[…prev,{id:`c${Date.now()}`,…d}]);
+if (editPiece==="new") setPieces(prev=>[…prev,{id:`c${Date.now()}`,…d}]);
 else setPieces(prev=>prev.map(p=>p.id===editPiece.id?{…p,…d}:p));
 setEditPiece(null);
 };
@@ -598,9 +598,9 @@ r.onload = e => {
 try {
 const data = JSON.parse(e.target.result);
 if (data.pieces && Array.isArray(data.pieces)) { setPieces(data.pieces); }
-if (data.plan && typeof data.plan === “object”) { setPlan(data.plan); }
+if (data.plan && typeof data.plan === "object") { setPlan(data.plan); }
 alert(`Imported ${data.pieces?.length || 0} pieces successfully!`);
-} catch(err) { alert(“Invalid file — please use a wardrobe-library.json export.”); }
+} catch(err) { alert("Invalid file — please use a wardrobe-library.json export."); }
 };
 r.readAsText(file);
 };
@@ -608,31 +608,31 @@ r.readAsText(file);
 const dayTotal = day => (plan[day]||[]).reduce((s,id)=>{ const p=byId(id); return s+(p?p.price:0); },0);
 
 return (
-<div style={{ fontFamily:”‘DM Sans’,sans-serif”,background:C.bg,height:“100vh”,display:“flex”,flexDirection:“column”,color:C.text,overflow:“hidden” }}>
+<div style={{ fontFamily:"‘DM Sans’,sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",color:C.text,overflow:"hidden" }}>
 {/* ── Mobile Header ── */}
-<div style={{ background:C.appBar,padding:“12px 16px 10px”,flexShrink:0,paddingTop:“max(12px,env(safe-area-inset-top))” }}>
-<div style={{ display:“flex”,alignItems:“center”,justifyContent:“space-between” }}>
-<span style={{ fontFamily:”‘DM Serif Display’,serif”,fontStyle:“italic”,color:”#F0EDE6”,fontSize:20 }}>Wardrobe Planner</span>
-<button onClick={signOut} style={{ background:“none”,border:“none”,color:“rgba(240,237,230,0.5)”,fontSize:10,cursor:“pointer”,fontFamily:”‘DM Sans’,sans-serif”,padding:“2px 4px”,marginLeft:4 }}>Sign out</button>
-<div style={{ display:“flex”,gap:6 }}>
-{tab===“planner” && (
-<button onClick={mixItUp} style={{ background:mixFlash?C.mixFlash:C.appBarBtn,color:”#F0EDE6”,border:“none”,borderRadius:6,padding:“6px 10px”,cursor:“pointer”,fontSize:11,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif” }}>
+<div style={{ background:C.appBar,padding:"12px 16px 10px",flexShrink:0,paddingTop:"max(12px,env(safe-area-inset-top))" }}>
+<div style={{ display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+<span style={{ fontFamily:"‘DM Serif Display’,serif",fontStyle:"italic",color:"#F0EDE6",fontSize:20 }}>Wardrobe Planner</span>
+<button onClick={signOut} style={{ background:"none",border:"none",color:"rgba(240,237,230,0.5)",fontSize:10,cursor:"pointer",fontFamily:"‘DM Sans’,sans-serif",padding:"2px 4px",marginLeft:4 }}>Sign out</button>
+<div style={{ display:"flex",gap:6 }}>
+{tab==="planner" && (
+<button onClick={mixItUp} style={{ background:mixFlash?C.mixFlash:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif" }}>
 ✦ Mix
 </button>
 )}
-{tab===“library” && (
+{tab==="library" && (
 <>
-<label style={{ background:C.appBarBtn,color:”#F0EDE6”,border:“none”,borderRadius:6,padding:“6px 10px”,cursor:“pointer”,fontSize:11,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif”,display:“flex”,alignItems:“center”,gap:4 }}>
+<label style={{ background:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif",display:"flex",alignItems:"center",gap:4 }}>
 <svg width="12" height="13" viewBox="0 0 12 13" fill="none"><path d="M6 12V5M3 7l3-3 3 3" stroke="#F0EDE6" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M1 10v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="#F0EDE6" strokeWidth="1.7" strokeLinecap="round"/></svg>
 Import
-<input type=“file” accept=”.json” style={{ display:“none” }} onChange={e=>importLibrary(e.target.files[0])}/>
+<input type="file" accept=".json" style={{ display:"none" }} onChange={e=>importLibrary(e.target.files[0])}/>
 </label>
-<button onClick={openAdd} style={{ background:”#F0EDE6”,color:C.appBar,border:“none”,borderRadius:6,padding:“6px 12px”,cursor:“pointer”,fontSize:12,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif” }}>
+<button onClick={openAdd} style={{ background:"#F0EDE6",color:C.appBar,border:"none",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif" }}>
 + Add
 </button>
 </>
 )}
-<button onClick={()=>setShowFind(true)} style={{ background:C.appBarBtn,color:”#F0EDE6”,border:“none”,borderRadius:6,padding:“6px 10px”,cursor:“pointer”,fontSize:11,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif”,display:“flex”,alignItems:“center”,gap:5 }}>
+<button onClick={()=>setShowFind(true)} style={{ background:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"6px 10px",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif",display:"flex",alignItems:"center",gap:5 }}>
 <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#F0EDE6" strokeWidth="1.7"/><path d="M9 9l2.5 2.5" stroke="#F0EDE6" strokeWidth="1.7" strokeLinecap="round"/></svg>
 Find new
 </button>
@@ -852,7 +852,7 @@ Find new
 // ╚══════════════════════════════════════════════════════════════════╝
 function DesktopApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomBrands, signOut }) {
 const [sidebar, setSidebar]     = useState(true);
-const [catFilter, setCatFilter] = useState(“all”);
+const [catFilter, setCatFilter] = useState("all");
 const [modal,  setModal]  = useState(null);
 const [form,   setForm]   = useState(EMPTY_FORM);
 const [delId,  setDelId]  = useState(null);
@@ -866,12 +866,12 @@ const byId = id => pieces.find(p => p.id === id);
 
 const onDragStart = useCallback((e, pieceId, fromDay) => {
 dragRef.current = { pieceId, fromDay };
-e.dataTransfer.effectAllowed = “move”;
-e.dataTransfer.setData(“text/plain”, pieceId);
+e.dataTransfer.effectAllowed = "move";
+e.dataTransfer.setData("text/plain", pieceId);
 }, []);
 const onDragOver = useCallback((e, zone) => {
 e.preventDefault(); e.stopPropagation();
-e.dataTransfer.dropEffect = “move”;
+e.dataTransfer.dropEffect = "move";
 setOverZone(zone);
 }, []);
 const onDragLeave = useCallback((e) => {
@@ -882,7 +882,7 @@ e.preventDefault(); e.stopPropagation();
 setOverZone(null);
 const info = dragRef.current; if (!info) return;
 const { pieceId, fromDay } = info; dragRef.current = null;
-if (toZone === “**lib**”) {
+if (toZone === "**lib**") {
 if (fromDay && DAYS.includes(fromDay))
 setPlan(prev => ({ …prev, [fromDay]: prev[fromDay].filter(id=>id!==pieceId) }));
 return;
@@ -897,12 +897,12 @@ return n;
 const onDragEnd = useCallback(() => { dragRef.current = null; setOverZone(null); }, []);
 
 const removeFrom = (pieceId, day) => setPlan(prev=>({…prev,[day]:prev[day].filter(id=>id!==pieceId)}));
-const openAdd = () => { setForm(EMPTY_FORM); setModal({mode:“add”}); };
-const openEdit = p => { setForm({name:p.name,brand:p.brand,variant:p.variant||””,price:String(p.price),link:p.link,image:p.image,category:p.category,purchased:p.purchased||false}); setModal({mode:“edit”,id:p.id}); };
+const openAdd = () => { setForm(EMPTY_FORM); setModal({mode:"add"}); };
+const openEdit = p => { setForm({name:p.name,brand:p.brand,variant:p.variant||"",price:String(p.price),link:p.link,image:p.image,category:p.category,purchased:p.purchased||false}); setModal({mode:"edit",id:p.id}); };
 const save = () => {
 if (!form.name.trim()) return;
 const d = {…form, price:parseFloat(form.price)||0};
-if (modal.mode===“add”) setPieces(prev=>[…prev,{id:`c${Date.now()}`,…d}]);
+if (modal.mode==="add") setPieces(prev=>[…prev,{id:`c${Date.now()}`,…d}]);
 else setPieces(prev=>prev.map(p=>p.id===modal.id?{…p,…d}:p));
 setModal(null);
 };
@@ -915,9 +915,9 @@ const togglePurchased = (id,e) => { e.stopPropagation(); setPieces(prev=>prev.ma
 const mixItUp = () => { const r=generateOutfits(pieces); if(r){setPlan(r);setMixFlash(true);setTimeout(()=>setMixFlash(false),500);} };
 const openExport = () => {
 const json = JSON.stringify({ exportedAt: new Date().toISOString(), pieces, plan }, null, 2);
-const w = window.open(””, “_blank”);
+const w = window.open("", "_blank");
 if (w) {
-w.document.write(’<html><head><title>wardrobe-library.json</title></head><body><pre style="font-family:monospace;font-size:12px;line-height:1.6;padding:20px;white-space:pre-wrap;word-break:break-all">’ + json.replace(/</g,”<”).replace(/>/g,”>”) + ‘</pre><p style="font-family:sans-serif;color:#888;padding:0 20px">Press Ctrl+S (Cmd+S on Mac) to save this file, or copy all the text above.</p></body></html>’);
+w.document.write(’<html><head><title>wardrobe-library.json</title></head><body><pre style="font-family:monospace;font-size:12px;line-height:1.6;padding:20px;white-space:pre-wrap;word-break:break-all">’ + json.replace(/</g,"<").replace(/>/g,">") + ‘</pre><p style="font-family:sans-serif;color:#888;padding:0 20px">Press Ctrl+S (Cmd+S on Mac) to save this file, or copy all the text above.</p></body></html>’);
 w.document.close();
 }
 };
@@ -928,38 +928,38 @@ r.onload = e => {
 try {
 const data = JSON.parse(e.target.result);
 if (data.pieces && Array.isArray(data.pieces)) setPieces(data.pieces);
-if (data.plan && typeof data.plan === “object”) setPlan(data.plan);
+if (data.plan && typeof data.plan === "object") setPlan(data.plan);
 alert(`Imported ${data.pieces?.length || 0} pieces successfully!`);
-} catch(err) { alert(“Invalid file — please use a wardrobe-library.json export.”); }
+} catch(err) { alert("Invalid file — please use a wardrobe-library.json export."); }
 };
 r.readAsText(file);
 };
 const dayTotal = day => (plan[day]||[]).reduce((s,id)=>{ const p=byId(id); return s+(p?p.price:0); },0);
-const shown = catFilter===“all”?pieces:pieces.filter(p=>p.category===catFilter);
+const shown = catFilter==="all"?pieces:pieces.filter(p=>p.category===catFilter);
 
 return (
-<div style={{ fontFamily:”‘DM Sans’,sans-serif”,background:C.bg,height:“100vh”,display:“flex”,flexDirection:“column”,fontSize:14,color:C.text,overflow:“hidden” }}>
-<header style={{ height:50,background:C.appBar,display:“flex”,alignItems:“center”,justifyContent:“space-between”,padding:“0 18px”,flexShrink:0,gap:12 }}>
-<div style={{ display:“flex”,alignItems:“center”,gap:10 }}>
-<button onClick={()=>setSidebar(s=>!s)} title={sidebar?“Collapse”:“Expand”}
-style={{ background:“none”,border:“none”,cursor:“pointer”,color:”#8A8278”,padding:“4px 6px”,lineHeight:0 }}>
+<div style={{ fontFamily:"‘DM Sans’,sans-serif",background:C.bg,height:"100vh",display:"flex",flexDirection:"column",fontSize:14,color:C.text,overflow:"hidden" }}>
+<header style={{ height:50,background:C.appBar,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 18px",flexShrink:0,gap:12 }}>
+<div style={{ display:"flex",alignItems:"center",gap:10 }}>
+<button onClick={()=>setSidebar(s=>!s)} title={sidebar?"Collapse":"Expand"}
+style={{ background:"none",border:"none",cursor:"pointer",color:"#8A8278",padding:"4px 6px",lineHeight:0 }}>
 {sidebar
 ? <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 4L6 9L11 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 : <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 4L12 9L7 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
 </button>
-<span style={{ fontFamily:”‘DM Serif Display’,serif”,fontStyle:“italic”,color:”#F0EDE6”,fontSize:19,letterSpacing:”-0.01em” }}>Wardrobe Planner</span>
+<span style={{ fontFamily:"‘DM Serif Display’,serif",fontStyle:"italic",color:"#F0EDE6",fontSize:19,letterSpacing:"-0.01em" }}>Wardrobe Planner</span>
 </div>
-<div style={{ display:“flex”,gap:8 }}>
-<HdrBtn onClick={()=>setShowFind(true)} icon=“🔍” label=“Find something new”/>
+<div style={{ display:"flex",gap:8 }}>
+<HdrBtn onClick={()=>setShowFind(true)} icon="🔍" label="Find something new"/>
 <HdrBtn onClick={mixItUp} icon="✦" label="Mix it up!" flash={mixFlash}/>
 <HdrBtn onClick={openExport} icon="↓" label="Export"/>
 <HdrBtn onClick={signOut} icon="→" label="Sign out"/>
-<label style={{ background:C.appBarBtn,color:”#F0EDE6”,border:“none”,borderRadius:6,padding:“7px 15px”,cursor:“pointer”,fontSize:12,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif”,display:“flex”,alignItems:“center”,gap:6 }}>
+<label style={{ background:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"7px 15px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif",display:"flex",alignItems:"center",gap:6 }}>
 <span style={{ fontSize:13 }}>↑</span>Import
-<input type=“file” accept=”.json” style={{ display:“none” }} onChange={e=>importLibrary(e.target.files[0])}/>
+<input type="file" accept=".json" style={{ display:"none" }} onChange={e=>importLibrary(e.target.files[0])}/>
 </label>
-<button onClick={openAdd} style={{ background:”#F0EDE6”,color:C.appBar,border:“none”,borderRadius:6,padding:“7px 16px”,cursor:“pointer”,fontSize:12,fontWeight:600,letterSpacing:“0.05em”,textTransform:“uppercase”,fontFamily:”‘DM Sans’,sans-serif” }}>+ Add Piece</button>
+<button onClick={openAdd} style={{ background:"#F0EDE6",color:C.appBar,border:"none",borderRadius:6,padding:"7px 16px",cursor:"pointer",fontSize:12,fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase",fontFamily:"‘DM Sans’,sans-serif" }}>+ Add Piece</button>
 </div>
 </header>
 
@@ -1048,26 +1048,26 @@ function DLibCard({ piece, used, onDragStart, onDragEnd, onEdit, onDel, onToggle
 const [hov, setHov] = useState(false);
 return (
 <div draggable onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-style={{ display:“flex”,gap:9,alignItems:“flex-start”,background:hov?C.bgCardHov:C.bgCard,border:`1px solid ${piece.purchased?C.purchasedBg:C.borderLight}`,borderRadius:8,padding:“9px 10px”,marginBottom:5,cursor:“grab”,position:“relative”,transition:“background .1s” }}>
+style={{ display:"flex",gap:9,alignItems:"flex-start",background:hov?C.bgCardHov:C.bgCard,border:`1px solid ${piece.purchased?C.purchasedBg:C.borderLight}`,borderRadius:8,padding:"9px 10px",marginBottom:5,cursor:"grab",position:"relative",transition:"background .1s" }}>
 <Thumb src={piece.image} name={piece.name} category={piece.category} size={44} onClickEmpty={onEdit}/>
 <div style={{ flex:1,minWidth:0 }}>
-<div style={{ display:“flex”,alignItems:“center”,gap:5,marginBottom:2 }}>
-<span style={{ width:6,height:6,borderRadius:“50%”,background:CAT_DOT[piece.category]||C.textMuted,flexShrink:0 }}/>
-<span style={{ fontSize:10,color:C.textMuted,fontWeight:600,letterSpacing:“0.05em”,textTransform:“uppercase” }}>{piece.brand}</span>
-{piece.purchased&&<span style={{ fontSize:9,background:C.purchased,color:“white”,borderRadius:3,padding:“1px 5px”,fontWeight:600 }}>✓</span>}
+<div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:2 }}>
+<span style={{ width:6,height:6,borderRadius:"50%",background:CAT_DOT[piece.category]||C.textMuted,flexShrink:0 }}/>
+<span style={{ fontSize:10,color:C.textMuted,fontWeight:600,letterSpacing:"0.05em",textTransform:"uppercase" }}>{piece.brand}</span>
+{piece.purchased&&<span style={{ fontSize:9,background:C.purchased,color:"white",borderRadius:3,padding:"1px 5px",fontWeight:600 }}>✓</span>}
 </div>
-<div style={{ fontSize:12,fontWeight:500,color:C.text,lineHeight:1.3,whiteSpace:“nowrap”,overflow:“hidden”,textOverflow:“ellipsis” }}>{piece.name}{piece.variant?` — ${piece.variant}`:””}</div>
-<div style={{ display:“flex”,alignItems:“center”,gap:6,marginTop:3 }}>
+<div style={{ fontSize:12,fontWeight:500,color:C.text,lineHeight:1.3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{piece.name}{piece.variant?` — ${piece.variant}`:""}</div>
+<div style={{ display:"flex",alignItems:"center",gap:6,marginTop:3 }}>
 <span style={{ fontSize:11,color:C.textMid }}>${piece.price}</span>
-{used.length>0&&<span style={{ fontSize:9,fontWeight:600,background:C.accent,color:”#F0EDE6”,padding:“1px 5px”,borderRadius:3 }}>{used.map(d=>d.slice(0,2)).join(”·”)}</span>}
-{piece.link&&<a href={piece.link} target=”_blank” rel=“noreferrer” onClick={e=>e.stopPropagation()} style={{ color:C.border,fontSize:11 }}>↗</a>}
+{used.length>0&&<span style={{ fontSize:9,fontWeight:600,background:C.accent,color:"#F0EDE6",padding:"1px 5px",borderRadius:3 }}>{used.map(d=>d.slice(0,2)).join("·")}</span>}
+{piece.link&&<a href={piece.link} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{ color:C.border,fontSize:11 }}>↗</a>}
 </div>
 </div>
 <Checkbox checked={piece.purchased} onChange={onToggle} small/>
 {hov&&(
-<div style={{ position:“absolute”,bottom:6,right:6,display:“flex”,gap:3 }}>
+<div style={{ position:"absolute",bottom:6,right:6,display:"flex",gap:3 }}>
 <MiniBtn onClick={e=>{e.stopPropagation();onEdit();}} bg={C.bgHeader} c={C.textMid}>Edit</MiniBtn>
-<MiniBtn onClick={e=>{e.stopPropagation();onDel();}} bg=”#F5E6E4” c={C.danger}>Del</MiniBtn>
+<MiniBtn onClick={e=>{e.stopPropagation();onDel();}} bg="#F5E6E4" c={C.danger}>Del</MiniBtn>
 </div>
 )}
 </div>
@@ -1078,18 +1078,18 @@ function DPieceCard({ piece, onDragStart, onDragEnd, onRemove }) {
 const [hov, setHov] = useState(false);
 return (
 <div draggable onDragStart={onDragStart} onDragEnd={onDragEnd} onMouseEnter={()=>setHov(true)} onMouseLeave={()=>setHov(false)}
-style={{ background:C.bgCard,border:`1.5px solid ${hov?C.accentSoft:C.borderLight}`,borderRadius:10,padding:“10px 12px 10px 10px”,cursor:“grab”,display:“flex”,gap:10,alignItems:“center”,boxShadow:hov?`0 2px 10px rgba(42,37,32,0.1)`:“none”,maxWidth:200,minWidth:148,transition:“all .1s” }}>
+style={{ background:C.bgCard,border:`1.5px solid ${hov?C.accentSoft:C.borderLight}`,borderRadius:10,padding:"10px 12px 10px 10px",cursor:"grab",display:"flex",gap:10,alignItems:"center",boxShadow:hov?`0 2px 10px rgba(42,37,32,0.1)`:"none",maxWidth:200,minWidth:148,transition:"all .1s" }}>
 <Thumb src={piece.image} name={piece.name} category={piece.category} size={52}/>
 <div style={{ flex:1,minWidth:0 }}>
-<div style={{ fontSize:9,color:CAT_DOT[piece.category]||C.textMuted,fontWeight:700,textTransform:“uppercase”,letterSpacing:“0.06em”,marginBottom:2 }}>{CAT[piece.category]}</div>
+<div style={{ fontSize:9,color:CAT_DOT[piece.category]||C.textMuted,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:2 }}>{CAT[piece.category]}</div>
 <div style={{ fontSize:12,fontWeight:600,color:C.text,lineHeight:1.3,marginBottom:1 }}>{piece.name}</div>
 {piece.variant&&<div style={{ fontSize:11,color:C.textMid,marginBottom:2 }}>{piece.variant}</div>}
 <div style={{ fontSize:10,color:C.textMuted }}>{piece.brand} · <span style={{ fontWeight:500,color:C.textMid }}>${piece.price}</span></div>
 {piece.purchased&&<div style={{ fontSize:9,color:C.purchased,fontWeight:600,marginTop:2 }}>✓ Purchased</div>}
 </div>
-<div style={{ display:“flex”,flexDirection:“column”,gap:5,flexShrink:0,alignItems:“center” }}>
-{piece.link&&<a href={piece.link} target=”_blank” rel=“noreferrer” onClick={e=>e.stopPropagation()} style={{ color:C.border,fontSize:12 }}>↗</a>}
-<button onClick={e=>{e.stopPropagation();onRemove();}} style={{ background:“none”,border:“none”,cursor:“pointer”,color:hov?C.danger:C.border,fontSize:16,lineHeight:1,padding:0,transition:“color .1s” }}>×</button>
+<div style={{ display:"flex",flexDirection:"column",gap:5,flexShrink:0,alignItems:"center" }}>
+{piece.link&&<a href={piece.link} target="_blank" rel="noreferrer" onClick={e=>e.stopPropagation()} style={{ color:C.border,fontSize:12 }}>↗</a>}
+<button onClick={e=>{e.stopPropagation();onRemove();}} style={{ background:"none",border:"none",cursor:"pointer",color:hov?C.danger:C.border,fontSize:16,lineHeight:1,padding:0,transition:"color .1s" }}>×</button>
 </div>
 </div>
 );
@@ -1097,10 +1097,10 @@ style={{ background:C.bgCard,border:`1.5px solid ${hov?C.accentSoft:C.borderLigh
 
 function DOverlay({ onClose, children }) {
 return (
-<div style={{ position:“fixed”,inset:0,background:“rgba(30,28,26,0.45)”,zIndex:200,display:“flex”,alignItems:“center”,justifyContent:“center”,padding:20 }} onClick={onClose}>
-<div style={{ background:C.bg,borderRadius:12,width:“100%”,maxWidth:480,padding:28,position:“relative”,maxHeight:“90vh”,overflowY:“auto”,boxShadow:“0 20px 50px rgba(0,0,0,0.2)” }} onClick={e=>e.stopPropagation()}>
+<div style={{ position:"fixed",inset:0,background:"rgba(30,28,26,0.45)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }} onClick={onClose}>
+<div style={{ background:C.bg,borderRadius:12,width:"100%",maxWidth:480,padding:28,position:"relative",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 50px rgba(0,0,0,0.2)" }} onClick={e=>e.stopPropagation()}>
 {children}
-<button onClick={onClose} style={{ position:“absolute”,top:14,right:16,background:“none”,border:“none”,fontSize:22,cursor:“pointer”,color:C.textLight,lineHeight:1 }}>×</button>
+<button onClick={onClose} style={{ position:"absolute",top:14,right:16,background:"none",border:"none",fontSize:22,cursor:"pointer",color:C.textLight,lineHeight:1 }}>×</button>
 </div>
 </div>
 );
@@ -1108,7 +1108,7 @@ return (
 
 function HdrBtn({ onClick, icon, label, flash }) {
 return (
-<button onClick={onClick} style={{ background:flash?C.mixFlash:C.appBarBtn,color:”#F0EDE6”,border:“none”,borderRadius:6,padding:“7px 15px”,cursor:“pointer”,fontSize:12,fontWeight:600,fontFamily:”‘DM Sans’,sans-serif”,display:“flex”,alignItems:“center”,gap:6,transition:“background .3s” }}>
+<button onClick={onClick} style={{ background:flash?C.mixFlash:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"7px 15px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"‘DM Sans’,sans-serif",display:"flex",alignItems:"center",gap:6,transition:"background .3s" }}>
 <span style={{ fontSize:13 }}>{icon}</span>{label}
 </button>
 );
@@ -1116,23 +1116,23 @@ return (
 
 // ── Login screen ──────────────────────────────────────────────────────────────
 function LoginScreen() {
-const [email, setEmail]       = useState(””);
-const [password, setPassword] = useState(””);
+const [email, setEmail]       = useState("");
+const [password, setPassword] = useState("");
 const [isSignUp, setIsSignUp] = useState(false);
-const [error, setError]       = useState(””);
+const [error, setError]       = useState("");
 const [loading, setLoading]   = useState(false);
-const [success, setSuccess]   = useState(””);
+const [success, setSuccess]   = useState("");
 
 const submit = async () => {
 const e = email.trim();
 const p = password.trim();
-if (!e || !p) { setError(“Please enter your email and password.”); return; }
-setLoading(true); setError(””); setSuccess(””);
+if (!e || !p) { setError("Please enter your email and password."); return; }
+setLoading(true); setError(""); setSuccess("");
 if (isSignUp) {
 const { error: err } = await supabase.auth.signUp({ email: e, password: p });
 setLoading(false);
 if (err) setError(err.message);
-else setSuccess(“Account created! You can now sign in.”);
+else setSuccess("Account created! You can now sign in.");
 } else {
 const { error: err } = await supabase.auth.signInWithPassword({ email: e, password: p });
 setLoading(false);
@@ -1140,12 +1140,12 @@ if (err) setError(err.message);
 }
 };
 
-const inputStyle = { width:“100%”,border:`1.5px solid ${C.border}`,borderRadius:8,padding:“11px 14px”,fontSize:15,fontFamily:”‘DM Sans’,sans-serif”,color:C.text,outline:“none”,background:C.bg,boxSizing:“border-box”,marginBottom:10 };
+const inputStyle = { width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"11px 14px",fontSize:15,fontFamily:"‘DM Sans’,sans-serif",color:C.text,outline:"none",background:C.bg,boxSizing:"border-box",marginBottom:10 };
 
 return (
-<div style={{ minHeight:“100vh”,background:C.bg,display:“flex”,alignItems:“center”,justifyContent:“center”,fontFamily:”‘DM Sans’,sans-serif”,padding:24 }}>
-<div style={{ width:“100%”,maxWidth:400,background:C.bgCard,borderRadius:16,padding:“40px 32px”,boxShadow:“0 4px 32px rgba(0,0,0,0.08)” }}>
-<div style={{ fontFamily:”‘DM Serif Display’,serif”,fontStyle:“italic”,fontSize:28,color:C.text,marginBottom:4 }}>Wardrobe</div>
+<div style={{ minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"‘DM Sans’,sans-serif",padding:24 }}>
+<div style={{ width:"100%",maxWidth:400,background:C.bgCard,borderRadius:16,padding:"40px 32px",boxShadow:"0 4px 32px rgba(0,0,0,0.08)" }}>
+<div style={{ fontFamily:"‘DM Serif Display’,serif",fontStyle:"italic",fontSize:28,color:C.text,marginBottom:4 }}>Wardrobe</div>
 <div style={{ fontSize:13,color:C.textMuted,marginBottom:28 }}>Your executive capsule planner</div>
 
 ```
@@ -1192,9 +1192,9 @@ constructor(props) { super(props); this.state = { error: null }; }
 static getDerivedStateFromError(error) { return { error }; }
 render() {
 if (this.state.error) return (
-<div style={{ padding:32,fontFamily:”‘DM Sans’,sans-serif”,background:C.bg,minHeight:“100vh” }}>
-<div style={{ fontFamily:”‘DM Serif Display’,serif”,fontStyle:“italic”,fontSize:20,color:C.text,marginBottom:12 }}>Something went wrong</div>
-<pre style={{ fontSize:11,color:C.danger,whiteSpace:“pre-wrap”,wordBreak:“break-all”,background:C.bgCard,padding:16,borderRadius:8 }}>
+<div style={{ padding:32,fontFamily:"‘DM Sans’,sans-serif",background:C.bg,minHeight:"100vh" }}>
+<div style={{ fontFamily:"‘DM Serif Display’,serif",fontStyle:"italic",fontSize:20,color:C.text,marginBottom:12 }}>Something went wrong</div>
+<pre style={{ fontSize:11,color:C.danger,whiteSpace:"pre-wrap",wordBreak:"break-all",background:C.bgCard,padding:16,borderRadius:8 }}>
 {this.state.error.toString()}
 {this.state.error.stack}
 </pre>
@@ -1239,8 +1239,8 @@ const isMobile = useIsMobile();
 const signOut = () => supabase.auth.signOut();
 
 if (authLoading) return (
-<div style={{ minHeight:“100vh”,background:C.bg,display:“flex”,alignItems:“center”,justifyContent:“center” }}>
-<div style={{ fontSize:13,color:C.textMuted,fontFamily:”‘DM Sans’,sans-serif” }}>Loading…</div>
+<div style={{ minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center" }}>
+<div style={{ fontSize:13,color:C.textMuted,fontFamily:"‘DM Sans’,sans-serif" }}>Loading…</div>
 </div>
 );
 
