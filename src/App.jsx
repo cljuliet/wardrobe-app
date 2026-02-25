@@ -72,7 +72,7 @@ function useStore(key, seed, userId) {
       .select("value")
       .eq("user_id", userId)
       .eq("key", key)
-      .single()
+      .MaybeSingle()
       .then(({ data }) => {
         if (data?.value !== undefined) {
           setVal(data.value);
