@@ -79,6 +79,9 @@ function useStore(key, seed, userId) {
           try { localStorage.setItem(key, JSON.stringify(data.value)); } catch {}
         }
         setSynced(true);
+      })
+      .catch(() => {
+        setSynced(true);
       });
   }, [userId, key]);
 
