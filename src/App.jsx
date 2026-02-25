@@ -1098,22 +1098,71 @@ function HdrBtn({ onClick, icon, label, flash }) {
 
 // ── Login screen ──────────────────────────────────────────────────────────────
 function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent]   = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail]       = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [error, setError]       = useState("");
+  const [loading, setLoading]   = useState(false);
+  const [success, setSuccess]   = useState("");
 
-  const send = async () => {
+  const submit = async () => {
     const e = email.trim();
-    if (!e) return;
-    setLoading(true); setError("");
-    const { error: err } = await supabase.auth.signInWithOtp({
-      email: e,
-      options: { emailRedirectTo: window.location.origin }
-    });
-    setLoading(false);
-    if (err) setError(err.message);
-    else setSent(true);
+    const p = password.trim();
+    if (!e || !p) { setError("Please enter your email and password."); return; }
+    setLoading(true); setError(""); setSuccess("");
+    if (isSignUp) {
+      const { error: err } = await supabase.auth.signUp({ email: e, password: p });
+      setLoading(false);
+      if (err) setError(err.message);
+      else setSuccess("Account created! You can now sign in.");
+    } else {
+      const { error: err } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      setLoading(false);
+      if (err) setError(err.message);
+    }
+  };
+
+  const inputStyle = { width:"100%",border:`1.5px solid ${C.border}`,borderRadius:8,padding:"11px 14px",fontSize:15,fontFamily:"'DM Sans',sans-serif",color:C.text,outline:"none",background:C.bg,boxSizing:"border-box",marginBottom:10 };
+
+  return (
+    <div style={{ minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:24 }}>
+      <div style={{ width:"100%",maxWidth:400,background:C.bgCard,borderRadius:16,padding:"40px 32px",boxShadow:"0 4px 32px rgba(0,0,0,0.08)" }}>
+        <div style={{ fontFamily:"'DM Serif Display',serif",fontStyle:"italic",fontSize:28,color:C.text,marginBottom:4 }}>Wardrobe</div>
+        <div style={{ fontSize:13,color:C.textMuted,marginBottom:28 }}>Your executive capsule planner</div>
+
+        <div style={{ fontSize:11,fontWeight:700,letterSpacing:"0.07em",textTransform:"uppercase",color:C.textMuted,marginBottom:6 }}>
+          {isSignUp ? "Create account" : "Sign in"}
+        </div>
+
+        <input value={email} onChange={e=>setEmail(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&submit()}
+          placeholder="you@example.com" type="email" style={inputStyle}/>
+        <input value={password} onChange={e=>setPassword(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&submit()}
+          placeholder="Password" type="password" style={inputStyle}/>
+
+        {error   && <div style={{ fontSize:12,color:C.danger,marginBottom:8 }}>{error}</div>}
+        {success && <div style={{ fontSize:12,color:C.purchased,marginBottom:8 }}>{success}</div>}
+
+        <button onClick={submit} disabled={loading}
+          style={{ width:"100%",background:C.appBar,color:"#F0EDE6",border:"none",borderRadius:8,padding:"13px 0",cursor:loading?"wait":"pointer",fontSize:14,fontWeight:600,fontFamily:"'DM Sans',sans-serif",marginBottom:12 }}>
+          {loading ? "Please wait…" : isSignUp ? "Create account →" : "Sign in →"}
+        </button>
+
+        <div style={{ textAlign:"center",fontSize:13,color:C.textMuted }}>
+          {isSignUp ? "Already have an account? " : "New here? "}
+          <button onClick={()=>{ setIsSignUp(!isSignUp); setError(""); setSuccess(""); }}
+            style={{ background:"none",border:"none",cursor:"pointer",color:C.accent,fontWeight:600,fontSize:13,fontFamily:"'DM Sans',sans-serif",textDecoration:"underline" }}>
+            {isSignUp ? "Sign in" : "Create account"}
+          </button>
+        </div>
+
+        <div style={{ fontSize:11,color:C.textLight,marginTop:16,lineHeight:1.6,textAlign:"center" }}>
+          Same email & password on any device keeps your wardrobe in sync.
+        </div>
+      </div>
+    </div>
+  );
   };
 
   return (
