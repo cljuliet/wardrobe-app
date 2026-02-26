@@ -968,12 +968,13 @@ function DesktopApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomB
           <button onClick={()=>setShowWishlist(s=>!s)} style={{ background:showWishlist?C.accent:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"7px 15px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6 }}>
             <span>♡</span>Wishlist
           </button>
-          <label style={{ background:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"7px 15px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6 }}>
+
+          <HdrBtn onClick={()=>setShowFind(true)} icon="🔍" label="Find something new"/>
+          <HdrBtn onClick={mixItUp} icon="✦" label="Mix it up!" flash={mixFlash}/>
+                    <label style={{ background:C.appBarBtn,color:"#F0EDE6",border:"none",borderRadius:6,padding:"7px 15px",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6 }}>
             <span style={{ fontSize:13 }}>↑</span>Import
             <input type="file" accept=".json" style={{ display:"none" }} onChange={e=>importLibrary(e.target.files[0])}/>
           </label>
-          <HdrBtn onClick={()=>setShowFind(true)} icon="🔍" label="Find something new"/>
-          <HdrBtn onClick={mixItUp} icon="✦" label="Mix it up!" flash={mixFlash}/>
           <HdrBtn onClick={openExport} icon="↓" label="Export"/>
           <HdrBtn onClick={signOut} icon="→" label="Sign out"/>
         </div>
