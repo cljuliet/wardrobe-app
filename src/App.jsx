@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import react, { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase.js";
 
 // ── Shared palette (Snowbound SW7004) ─────────────────────────────────────────
