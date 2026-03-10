@@ -32,7 +32,7 @@ const SEED_PLAN = {
   Monday:[], Tuesday:[], Wednesday:[], Thursday:[], Friday:[], Saturday:[], Sunday:[],
 };
 
-const EMPTY_FORM = { name:"", brand:"", variant:"", price:"", link:"", image:"", category:"top", purchased:false };
+const EMPTY_FORM = { name:"", brand:"", variant:"", price:"", link:"", image:"", category:"top", :false };
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
@@ -241,7 +241,7 @@ function Thumb({ src, name, category, size=52, onClickEmpty, style={} }) {
 function Checkbox({ checked, onChange, small }) {
   const s = small ? 16 : 20;
   return (
-    <div onClick={onChange} style={{ width:s, height:s, borderRadius:small?3:5, border:`2px solid ${checked?C.purchased:C.border}`, background:checked?C.purchased:C.bgCard, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", transition:"all .15s" }}>
+    <div onClick={onChange} style={{ width:s, height:s, borderRadius:small?3:5, border:`2px solid ${checked?C.:C.border}`, background:checked?C.:C.bgCard, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, cursor:"pointer", transition:"all .15s" }}>
       {checked && <svg width={small?8:11} height={small?6:9} viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
     </div>
   );
@@ -474,7 +474,7 @@ function FindNewModal({ pieces, customBrands, onClose, onAdd, onBrandsChange }) 
                   <div key={b} style={{ display:"flex",alignItems:"center",gap:6,background:C.bgCard,border:`1.5px solid ${C.border}`,borderRadius:99,padding:"5px 12px" }}>
                     <span style={{ fontSize:13,color:C.text,fontWeight:500 }}>{b}</span>
                     {BRAND_SEARCH_URLS[b]
-                      ? <span style={{ fontSize:9,color:C.purchased,fontWeight:700 }}>✓</span>
+                      ? <span style={{ fontSize:9,color:C.,fontWeight:700 }}>✓</span>
                       : <span style={{ fontSize:9,color:C.accentSoft,fontWeight:700 }}>G</span>}
                     <button onClick={()=>removeBrand(b)} style={{ background:"none",border:"none",cursor:"pointer",color:C.textMuted,fontSize:14,lineHeight:1,padding:0 }}>×</button>
                   </div>
@@ -552,8 +552,8 @@ if (!error) {
         )}
       </FormField>
       <label style={{ display:"flex",alignItems:"center",gap:10,marginBottom:20,cursor:"pointer" }}>
-        <Checkbox checked={form.purchased} onChange={()=>setForm(f=>({...f,purchased:!f.purchased}))}/>
-        <span style={{ fontSize:14,color:C.textMid,userSelect:"none" }}>Purchased</span>
+        <Checkbox checked={form.} onChange={()=>setForm(f=>({...f,:!f.}))}/>
+        <span style={{ fontSize:14,color:C.textMid,userSelect:"none" }}></span>
       </label>
       <div style={{ display:"flex",gap:8 }}>
         <button onClick={onSave} style={{ flex:1,background:C.appBar,color:"#F0EDE6",border:"none",borderRadius:8,padding:"13px 0",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"'DM Sans',sans-serif" }}>
@@ -756,7 +756,7 @@ function MobileApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomBr
                     <div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:2 }}>
                       <span style={{ width:6,height:6,borderRadius:"50%",background:CAT_DOT[p.category]||C.border,flexShrink:0 }}/>
                       <span style={{ fontSize:10,color:C.textMuted,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.05em" }}>{p.brand}</span>
-                      {p.purchased&&<span style={{ fontSize:9,background:C.purchased,color:"white",borderRadius:3,padding:"1px 5px",fontWeight:600 }}>✓</span>}
+                    
                     </div>
                     <div style={{ fontSize:13,fontWeight:600,color:C.text,lineHeight:1.3 }}>{p.name}{p.variant?` — ${p.variant}`:""}</div>
                     <div style={{ fontSize:12,color:C.textMid,marginTop:2 }}>${p.price} · {CAT[p.category]}</div>
