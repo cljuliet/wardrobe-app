@@ -507,7 +507,20 @@ function FindNewModal({ pieces, customBrands, onClose, onAdd, onBrandsChange }) 
 function PieceForm({ form, setForm, onSave, onCancel, isEdit }) {
   const handleFile = (file) => {
     if (!file) return;
-    const r = new FileReader(); r.onload = e => setForm(f=>({...f,image:e.target.result})); r.readAsDataURL(file);
+    const img = new Image();
+const url = URL.createObjectURL(file);
+img.onload = () => {
+ const MAX = 400;
+ const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+ const canvas = document.createElement("canvas");
+ canvas.width = img.width * scale;
+ canvas.height = img.height * scale;
+ canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+ const compressed = canvas.toDataURL("image/jpeg", 0.7);
+ setForm(f=>({...f, image: compressed}));
+ URL.revokeObjectURL(url);
+};
+img.src = url;
   };
   return (
     <div>
@@ -866,11 +879,11 @@ function MobileApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomBr
       {showFind && <FindNewModal pieces={pieces} customBrands={customBrands} onBrandsChange={setCustomBrands} onClose={()=>setShowFind(false)} onAdd={item=>setPieces(prev=>[...prev,item])}/>}
 
       {/* ── Wishlist overlay (mobile) ── */}
-      {tab==="wishlist" && (
-        <div style={{ position:"fixed",inset:0,background:C.bg,zIndex:200,display:"flex",flexDirection:"column",paddingBottom:"env(safe-area-inset-bottom)" }}>
-          <WishlistPanel pieces={pieces} onClose={null}/>
-        </div>
-      )}
+    {tab==="wishlist" && (
+<div style={{ position:"fixed",top:0,left:0,right:0,bottom:60,background:C.bg,zIndex:200,display:"flex",flexDirection:"column" }}>
+<WishlistPanel pieces={pieces} onClose={null}/>
+</div>
+)}
 
       {/* Close day picker on outside tap */}
       {showDayPicker && <div style={{ position:"fixed",inset:0,zIndex:99 }} onClick={()=>setShowDayPicker(null)}/>}
