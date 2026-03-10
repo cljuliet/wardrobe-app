@@ -112,12 +112,7 @@ function useStore(key, seed, userId) {
       return;
     }
 
-    // Block write if it would reduce item count vs what was in Supabase
-    if (wouldReduceData(val)) {
-      console.warn("[useStore] blocked write that would reduce data:", key, "remote:", remoteCount, "local:", val.length);
-      return;
-    }
-
+ 
     supabase.from("wardrobe_data").upsert(
       { user_id: userId, key, value: val, updated_at: new Date().toISOString() },
       { onConflict: "user_id,key" }
