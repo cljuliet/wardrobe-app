@@ -620,7 +620,7 @@ function MobileApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomBr
     r.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
-        if (data.pieces && Array.isArray(data.pieces)) { setPieces(data.pieces); }
+        if (data.pieces && Array.isArray(data.pieces)) { data.pieces.forEach(p => setPieces(prev => { const exists = prev.find(x=>x.id===p.id); return exists ? prev.map(x=>x.id===p.id?p:x) : [...prev,p]; })); }
         if (data.plan && typeof data.plan === "object") { setPlan(data.plan); }
         alert(`Imported ${data.pieces?.length || 0} pieces successfully!`);
       } catch(err) { alert("Invalid file — please use a wardrobe-library.json export."); }
@@ -964,7 +964,7 @@ function DesktopApp({ pieces, setPieces, plan, setPlan, customBrands, setCustomB
     r.onload = e => {
       try {
         const data = JSON.parse(e.target.result);
-        if (data.pieces && Array.isArray(data.pieces)) setPieces(data.pieces);
+        if (data.pieces && Array.isArray(data.pieces)) { data.pieces.forEach(p => setPieces(prev => { const exists = prev.find(x=>x.id===p.id); return exists ? prev.map(x=>x.id===p.id?p:x) : [...prev,p]; })); }
         if (data.plan && typeof data.plan === "object") setPlan(data.plan);
         alert(`Imported ${data.pieces?.length || 0} pieces successfully!`);
       } catch(err) { alert("Invalid file — please use a wardrobe-library.json export."); }
