@@ -505,22 +505,20 @@ function FindNewModal({ pieces, customBrands, onClose, onAdd, onBrandsChange }) 
 
 // ── Piece Edit/Add Form (shared, used in both views) ──────────────────────────
 function PieceForm({ form, setForm, onSave, onCancel, isEdit }) {
-  const handleFile = (file) => {
+ const handleFile = async (file) => {
     if (!file) return;
-    const img = new Image();
-const url = URL.createObjectURL(file);
-img.onload = () => {
- const MAX = 400;
- const scale = Math.min(1, MAX / Math.max(img.width, img.height));
- const canvas = document.createElement("canvas");
- canvas.width = img.width * scale;
- canvas.height = img.height * scale;
- canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
- const compressed = canvas.toDataURL("image/jpeg", 0.7);
- setForm(f=>({...f, image: compressed}));
- URL.revokeObjectURL(url);
-};
-img.src = url;
+const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+const { data, error } = await supabase.storage
+ .from("wardrobe-images")
+ .upload(fileName, file, { upsert: true });
+if (!error) {
+ const { data: { publicUrl } } = supabase.storage
+   .from("wardrobe-images")
+   .getPublicUrl(fileName);
+ setForm(f=>({...f, image: publicUrl}));
+} else {
+ alert("Image upload failed — please try again.");
+}
   };
   return (
     <div>
